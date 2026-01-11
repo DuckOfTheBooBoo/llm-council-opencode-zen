@@ -35,7 +35,7 @@ async def query_model(
     # Route to appropriate endpoint based on model type
     # Claude models use Anthropic-compatible endpoint
     # Other models use OpenAI-compatible endpoint
-    if "claude" in model.lower():
+    if model.lower().startswith("claude"):
         endpoint = f"{OPENCODE_ZEN_BASE_URL}/messages"
     else:
         endpoint = f"{OPENCODE_ZEN_BASE_URL}/responses"

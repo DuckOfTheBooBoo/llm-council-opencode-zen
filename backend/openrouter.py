@@ -7,6 +7,7 @@ This file is kept for reference purposes only and is NOT functional.
 For the current implementation, see backend/opencode_zen.py
 """
 
+import asyncio
 import httpx
 from typing import List, Dict, Any, Optional
 
@@ -78,8 +79,6 @@ async def query_models_parallel(
     Returns:
         Dict mapping model identifier to response dict (or None if failed)
     """
-    import asyncio
-
     # Create tasks for all models
     tasks = [query_model(model, messages) for model in models]
 
