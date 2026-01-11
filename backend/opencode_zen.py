@@ -1,5 +1,6 @@
 """OpenCode Zen API client for making LLM requests."""
 
+import asyncio
 import httpx
 from typing import List, Dict, Any, Optional
 from .config import OPENCODE_API_KEY, OPENCODE_ZEN_BASE_URL
@@ -75,8 +76,6 @@ async def query_models_parallel(
     Returns:
         Dict mapping model identifier to response dict (or None if failed)
     """
-    import asyncio
-
     # Create tasks for all models
     tasks = [query_model(model, messages) for model in models]
 
