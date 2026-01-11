@@ -5,22 +5,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# OpenRouter API key
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+# OpenCode Zen API key
+OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY")
 
-# Council members - list of OpenRouter model identifiers
+# OpenCode Zen API base URL
+OPENCODE_ZEN_BASE_URL = "https://opencode.ai/zen/v1"
+
+# Council members - list of OpenCode Zen model identifiers
 COUNCIL_MODELS = [
-    "openai/gpt-5.1",
-    "google/gemini-3-pro-preview",
-    "anthropic/claude-sonnet-4.5",
-    "x-ai/grok-4",
+    "gpt-5.2",
+    "claude-sonnet-4-5",
+    "gemini-3-pro",
+    "qwen3-coder",
+    "gpt-5.1-codex",
 ]
 
 # Chairman model - synthesizes final response
-CHAIRMAN_MODEL = "google/gemini-3-pro-preview"
-
-# OpenRouter API endpoint
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+CHAIRMAN_MODEL = "gpt-5.2"
 
 # Data directory for conversation storage
 DATA_DIR = "data/conversations"

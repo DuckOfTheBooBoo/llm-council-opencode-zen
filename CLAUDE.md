@@ -11,16 +11,19 @@ LLM Council is a 3-stage deliberation system where multiple LLMs collaboratively
 ### Backend Structure (`backend/`)
 
 **`config.py`**
-- Contains `COUNCIL_MODELS` (list of OpenRouter model identifiers)
+- Contains `COUNCIL_MODELS` (list of OpenCode Zen model identifiers)
 - Contains `CHAIRMAN_MODEL` (model that synthesizes final answer)
-- Uses environment variable `OPENROUTER_API_KEY` from `.env`
+- Uses environment variable `OPENCODE_API_KEY` from `.env`
 - Backend runs on **port 8001** (NOT 8000 - user had another app on 8000)
 
-**`openrouter.py`**
+**`opencode_zen.py`**
 - `query_model()`: Single async model query
 - `query_models_parallel()`: Parallel queries using `asyncio.gather()`
 - Returns dict with 'content' and optional 'reasoning_details'
 - Graceful degradation: returns None on failure, continues with successful responses
+- Automatically routes to correct endpoint based on model type:
+  - Claude models → `/messages` (Anthropic-compatible)
+  - Other models → `/responses` (OpenAI-compatible)
 
 **`council.py`** - The Core Logic
 - `stage1_collect_responses()`: Parallel queries to all council models
@@ -93,7 +96,7 @@ This strict format allows reliable parsing while still getting thoughtful evalua
 
 ### De-anonymization Strategy
 - Models receive: "Response A", "Response B", etc.
-- Backend creates mapping: `{"Response A": "openai/gpt-5.1", ...}`
+- Backend creates mapping: `{"Response A": "gpt-5.2", ...}`
 - Frontend displays model names in **bold** for readability
 - Users see explanation that original evaluation used anonymous labels
 - This prevents bias while maintaining transparency
@@ -143,7 +146,7 @@ Models are hardcoded in `backend/config.py`. Chairman can be same or different f
 
 ## Testing Notes
 
-Use `test_openrouter.py` to verify API connectivity and test different model identifiers before adding to council. The script tests both streaming and non-streaming modes.
+Use a test script to verify API connectivity and test different model identifiers before adding to council. The OpenCode Zen API is compatible with OpenAI's API format for most models, with special handling for Claude models via the `/messages` endpoint.
 
 ## Data Flow Summary
 
