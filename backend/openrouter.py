@@ -2,14 +2,18 @@
 
 DEPRECATED: This module has been replaced by opencode_zen.py.
 The project has migrated from OpenRouter to OpenCode Zen for LLM API access.
-This file is kept for reference purposes only.
+This file is kept for reference purposes only and is NOT functional.
 
 For the current implementation, see backend/opencode_zen.py
 """
 
 import httpx
 from typing import List, Dict, Any, Optional
-from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
+
+# Deprecated configuration variables (no longer in config.py)
+# These are kept here for reference only
+OPENROUTER_API_KEY = None  # DEPRECATED: Use OPENCODE_API_KEY instead
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"  # DEPRECATED
 
 
 async def query_model(
