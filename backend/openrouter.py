@@ -1,4 +1,11 @@
-"""OpenRouter API client for making LLM requests."""
+"""OpenRouter API client for making LLM requests.
+
+DEPRECATED: This module has been replaced by opencode_zen.py.
+The project has migrated from OpenRouter to OpenCode Zen for LLM API access.
+This file is kept for reference purposes only.
+
+For the current implementation, see backend/opencode_zen.py
+"""
 
 import httpx
 from typing import List, Dict, Any, Optional
