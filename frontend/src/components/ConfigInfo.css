@@ -1,0 +1,106 @@
+.config-info {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.config-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.config-toggle:hover {
+  background: #ebebeb;
+  border-color: #4a90e2;
+}
+
+.config-icon {
+  font-size: 16px;
+}
+
+.config-label {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+
+.expand-icon {
+  font-size: 10px;
+  color: #888;
+}
+
+.config-details {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.config-section {
+  margin-bottom: 12px;
+}
+
+.config-section:last-child {
+  margin-bottom: 0;
+}
+
+.config-section-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.model-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.model-item {
+  padding: 4px 8px;
+  margin: 2px 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #555;
+}
+
+.model-item.chairman {
+  background: #e3f2fd;
+  border-color: #4a90e2;
+  color: #1565c0;
+  font-weight: 500;
+}
+
+.config-info-text {
+  color: #666;
+  font-size: 11px;
+  padding: 4px 0;
+}
+
+.config-warning {
+  margin-top: 8px;
+  padding: 8px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 11px;
+}
