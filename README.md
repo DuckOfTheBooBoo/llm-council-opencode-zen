@@ -44,7 +44,7 @@ uv sync
 
 Alternatively, you can use pip:
 ```bash
-pip install -r pyproject.toml  # Or install directly: pip install opencode-ai fastapi uvicorn python-dotenv httpx pydantic
+pip install -e .  # Install from pyproject.toml
 ```
 
 **Frontend:**

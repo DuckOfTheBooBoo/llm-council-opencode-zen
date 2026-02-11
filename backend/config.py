@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # OpenCode serve configuration
-# Server URL (defaults to local server on the default OpenCode SDK port)
+# Server URL (defaults to local server on port 54321, which is the official OpenCode SDK default port)
 OPENCODE_SERVER_URL = os.getenv("OPENCODE_SERVER_URL", "http://localhost:54321")
 
 # Council members - list of model identifiers in format "provider:model"

@@ -48,7 +48,7 @@ async def query_model(
     try:
         # Parse provider and model from format "provider:model"
         if ":" not in model:
-            print(f"Invalid model format '{model}'. Expected 'provider:model' format (e.g., 'openai:gpt-4')")
+            print(f"Invalid model format '{model}'. Expected \"provider:model\" format (e.g., \"openai:gpt-4\")")
             return None
             
         provider_id, model_id = model.split(":", 1)

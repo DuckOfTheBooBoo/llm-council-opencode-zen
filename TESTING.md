@@ -35,8 +35,8 @@ Verify the server is running before proceeding to the next step.
 # Install project dependencies with uv
 uv sync
 
-# Or with pip
-pip install opencode-ai fastapi uvicorn python-dotenv httpx pydantic
+# Or with pip (from project root)
+pip install -e .
 ```
 
 The official OpenCode SDK (`opencode-ai`) will be installed automatically.
