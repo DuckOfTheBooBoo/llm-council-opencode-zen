@@ -62,6 +62,12 @@ COUNCIL_MODELS = [
 CHAIRMAN_MODEL = "gpt-5.2"
 ```
 
+**Important:** The LLM Council requires:
+- **Minimum 2 council models** for meaningful peer review (more models provide better perspectives)
+- **1 chairman model** to synthesize the final response (can be the same as one of the council models)
+
+The default configuration includes 5 council models plus 1 chairman, which provides robust multi-perspective analysis.
+
 ## Running the Application
 
 **Option 1: Use the start script**
@@ -90,3 +96,23 @@ Then open http://localhost:5173 in your browser.
 - **Frontend:** React + Vite, react-markdown for rendering
 - **Storage:** JSON files in `data/conversations/`
 - **Package Management:** uv for Python, npm for JavaScript
+
+## Model Requirements
+
+The LLM Council system is designed to work with multiple AI models to provide diverse perspectives:
+
+### Minimum Requirements
+- **At least 2 council models**: Required for Stage 2 peer review to be meaningful. With only 1 model, there's nothing to compare and rank.
+- **1 chairman model**: Required for Stage 3 synthesis. Can be the same as one of the council models or a different model.
+
+### How It Works
+1. **Stage 1**: All council models independently respond to your query
+2. **Stage 2**: Each council model anonymously reviews and ranks all responses (including its own)
+3. **Stage 3**: The chairman model synthesizes insights from all responses and rankings into a final answer
+
+### Recommendations
+- **3-5 council models**: Provides good diversity while maintaining reasonable response times
+- **Different model types**: Mix models from different providers (OpenAI, Anthropic, Google, etc.) for varied perspectives
+- **Chairman selection**: Use a strong reasoning model as chairman (e.g., GPT-5.2, Claude Sonnet 4.5, Gemini 3 Pro)
+
+The default configuration uses 5 council models, which offers an excellent balance of diverse perspectives and practical performance.
