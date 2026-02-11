@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 
 try:
     from opencode_ai import AsyncOpencode
-    from opencode_ai.types import TextPartInput
+    from opencode_ai.types import TextPartInputParam
 except ImportError as e:
     print(f"Error importing OpenCode SDK: {e}")
     print("Please install the SDK: pip install opencode-ai")
@@ -76,7 +76,7 @@ async def query_model(
                 conversation_text += f"Assistant: {content}\n"
         
         # Create text part
-        text_part = TextPartInput(text=conversation_text.strip())
+        text_part = TextPartInputParam(text=conversation_text.strip())
         
         # Send the message
         system_prompt = "\n".join(system_messages) if system_messages else None
