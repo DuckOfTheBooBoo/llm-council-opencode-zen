@@ -6,12 +6,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # OpenCode serve configuration
-# Server URL (defaults to local server)
-OPENCODE_SERVER_URL = os.getenv("OPENCODE_SERVER_URL", "http://127.0.0.1:4096")
-
-# Optional HTTP Basic Auth credentials
-OPENCODE_SERVER_USERNAME = os.getenv("OPENCODE_SERVER_USERNAME", "opencode")
-OPENCODE_SERVER_PASSWORD = os.getenv("OPENCODE_SERVER_PASSWORD")
+# Server URL (defaults to local server on the default OpenCode SDK port)
+OPENCODE_SERVER_URL = os.getenv("OPENCODE_SERVER_URL", "http://localhost:54321")
 
 # Council members - list of model identifiers in format "provider:model"
 # Examples: "openai:gpt-4", "anthropic:claude-3-5-sonnet", "google:gemini-1.5-pro"
