@@ -2,7 +2,7 @@
 
 ![llmcouncil](header.jpg)
 
-The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT 5.2, Google Gemini 3.0 Pro, Anthropic Claude Sonnet 4.5, Qwen3 Coder, etc.), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenCode Zen to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
+The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT-4, Google Gemini, Anthropic Claude, etc.), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenCode serve to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
 
 In a bit more detail, here is what happens when you submit a query:
 
@@ -16,9 +16,52 @@ This project was 99% vibe coded as a fun Saturday hack because I wanted to explo
 
 ## Setup
 
-### 1. Install Dependencies
+### 1. Start OpenCode Serve
 
-The project uses [uv](https://docs.astral.sh/uv/) for project management.
+This application uses [OpenCode serve](https://www.opencodecn.com/docs/server) as the local LLM server.
+
+**Install OpenCode (if not already installed):**
+```bash
+# Follow installation instructions at https://www.opencodecn.com/
+```
+
+**Start the server:**
+```bash
+# Local only (default, binds to 127.0.0.1:4096)
+opencode serve
+
+# Or for network access (accessible from other machines/containers)
+opencode serve --hostname 0.0.0.0 --port 4096
+```
+
+**Optional: Enable HTTP Basic Auth:**
+```bash
+export OPENCODE_SERVER_PASSWORD=your_password
+export OPENCODE_SERVER_USERNAME=opencode  # Optional, defaults to "opencode"
+opencode serve
+```
+
+The server will be available at `http://127.0.0.1:4096` by default.
+
+### 2. Generate OpenAPI Client
+
+The application uses a Python client generated from OpenCode serve's OpenAPI specification.
+
+**Generate the client:**
+```bash
+./generate_openapi_client.sh
+```
+
+This script will:
+1. Fetch the OpenAPI spec from your running `opencode serve` instance
+2. Generate a Python client using Docker and openapi-generator
+3. Place the generated client in `opencode_client/` directory
+
+**Note:** The generated client directory is excluded from git. Regenerate as needed.
+
+### 3. Install Dependencies
+
+The project uses [uv](https://docs.astral.sh/uv/) for Python dependency management.
 
 **Backend:**
 ```bash
@@ -32,41 +75,41 @@ npm install
 cd ..
 ```
 
-### 2. Configure API Key
+### 4. Configure Environment
 
 Create a `.env` file in the project root:
 
 ```bash
-OPENCODE_API_KEY=your_opencode_zen_api_key_here
+# OpenCode serve URL (defaults to http://127.0.0.1:4096 if not set)
+OPENCODE_SERVER_URL=http://127.0.0.1:4096
+
+# Optional HTTP Basic Auth (leave empty if not using auth)
+OPENCODE_SERVER_USERNAME=opencode
+OPENCODE_SERVER_PASSWORD=
 ```
 
-Get your API key at [opencode.ai/zen](https://opencode.ai/zen). OpenCode Zen offers:
-- **Pay-as-you-go pricing** - Only pay for what you use
-- **Optimized for coding tasks** - Curated models for development
-- **Multiple providers** - Access GPT, Claude, Gemini, Qwen, and more
-- **Free experimental models** - Try new models at no cost
-
-### 3. Configure Models (Optional)
+### 5. Configure Models (Optional)
 
 Edit `backend/config.py` to customize the council:
 
 ```python
 COUNCIL_MODELS = [
-    "gpt-5.2",
-    "claude-sonnet-4-5",
-    "gemini-3-pro",
-    "qwen3-coder",
-    "gpt-5.1-codex",
+    "openai:gpt-4",
+    "anthropic:claude-3-5-sonnet",
+    "google:gemini-1.5-pro",
+    "openai:gpt-4-turbo",
 ]
 
-CHAIRMAN_MODEL = "gpt-5.2"
+CHAIRMAN_MODEL = "openai:gpt-4"
 ```
+
+**Model Format:** Use `provider:model` format (e.g., `openai:gpt-4`, `anthropic:claude-3-5-sonnet`)
 
 **Important:** The LLM Council requires:
 - **Minimum 2 council models** for meaningful peer review (more models provide better perspectives)
 - **1 chairman model** to synthesize the final response (can be the same as one of the council models)
 
-The default configuration includes 5 council models plus 1 chairman, which provides robust multi-perspective analysis.
+The default configuration includes 4 council models plus 1 chairman, which provides robust multi-perspective analysis.
 
 ## Running the Application
 
@@ -92,7 +135,7 @@ Then open http://localhost:5173 in your browser.
 
 ## Tech Stack
 
-- **Backend:** FastAPI (Python 3.10+), async httpx, OpenCode Zen API
+- **Backend:** FastAPI (Python 3.10+), OpenCode serve with OpenAPI-generated client
 - **Frontend:** React + Vite, react-markdown for rendering
 - **Storage:** JSON files in `data/conversations/`
 - **Package Management:** uv for Python, npm for JavaScript
@@ -113,6 +156,29 @@ The LLM Council system is designed to work with multiple AI models to provide di
 ### Recommendations
 - **3-5 council models**: Provides good diversity while maintaining reasonable response times
 - **Different model types**: Mix models from different providers (OpenAI, Anthropic, Google, etc.) for varied perspectives
-- **Chairman selection**: Use a strong reasoning model as chairman (e.g., GPT-5.2, Claude Sonnet 4.5, Gemini 3 Pro)
+- **Chairman selection**: Use a strong reasoning model as chairman (e.g., GPT-4, Claude 3.5 Sonnet, Gemini 1.5 Pro)
 
-The default configuration uses 5 council models, which offers an excellent balance of diverse perspectives and practical performance.
+The default configuration uses 4 council models, which offers an excellent balance of diverse perspectives and practical performance.
+
+## Architecture
+
+### OpenCode Serve Integration
+
+This application uses OpenCode serve as the local LLM server, which provides:
+- **Single API** for multiple LLM providers (OpenAI, Anthropic, Google, etc.)
+- **Local execution** with your own API keys
+- **Session-based conversations** with message history
+- **OpenAPI 3.1 specification** for type-safe client generation
+
+### Generated Client
+
+The Python client is generated from OpenCode serve's OpenAPI spec, providing:
+- **Type-safe API calls** with full IDE support
+- **Automatic serialization/deserialization** of requests and responses
+- **Built-in authentication** support (HTTP Basic Auth)
+- **Consistent error handling**
+
+To regenerate the client (e.g., after server updates):
+```bash
+./generate_openapi_client.sh
+```
