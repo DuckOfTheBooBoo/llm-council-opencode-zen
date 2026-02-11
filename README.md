@@ -2,7 +2,7 @@
 
 ![llmcouncil](header.jpg)
 
-The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT 5.1, Google Gemini 3.0 Pro, Anthropic Claude Sonnet 4.5, xAI Grok 4, eg.c), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenRouter to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
+The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT 5.2, Google Gemini 3.0 Pro, Anthropic Claude Sonnet 4.5, Qwen3 Coder, etc.), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenCode Zen to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
 
 In a bit more detail, here is what happens when you submit a query:
 
@@ -37,10 +37,14 @@ cd ..
 Create a `.env` file in the project root:
 
 ```bash
-OPENROUTER_API_KEY=sk-or-v1-...
+OPENCODE_API_KEY=your_opencode_zen_api_key_here
 ```
 
-Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purchase the credits you need, or sign up for automatic top up.
+Get your API key at [opencode.ai/zen](https://opencode.ai/zen). OpenCode Zen offers:
+- **Pay-as-you-go pricing** - Only pay for what you use
+- **Optimized for coding tasks** - Curated models for development
+- **Multiple providers** - Access GPT, Claude, Gemini, Qwen, and more
+- **Free experimental models** - Try new models at no cost
 
 ### 3. Configure Models (Optional)
 
@@ -48,13 +52,14 @@ Edit `backend/config.py` to customize the council:
 
 ```python
 COUNCIL_MODELS = [
-    "openai/gpt-5.1",
-    "google/gemini-3-pro-preview",
-    "anthropic/claude-sonnet-4.5",
-    "x-ai/grok-4",
+    "gpt-5.2",
+    "claude-sonnet-4-5",
+    "gemini-3-pro",
+    "qwen3-coder",
+    "gpt-5.1-codex",
 ]
 
-CHAIRMAN_MODEL = "google/gemini-3-pro-preview"
+CHAIRMAN_MODEL = "gpt-5.2"
 ```
 
 ## Running the Application
@@ -81,7 +86,7 @@ Then open http://localhost:5173 in your browser.
 
 ## Tech Stack
 
-- **Backend:** FastAPI (Python 3.10+), async httpx, OpenRouter API
+- **Backend:** FastAPI (Python 3.10+), async httpx, OpenCode Zen API
 - **Frontend:** React + Vite, react-markdown for rendering
 - **Storage:** JSON files in `data/conversations/`
 - **Package Management:** uv for Python, npm for JavaScript

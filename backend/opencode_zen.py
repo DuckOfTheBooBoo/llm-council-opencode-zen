@@ -1,20 +1,9 @@
-"""OpenRouter API client for making LLM requests.
-
-DEPRECATED: This module has been replaced by opencode_zen.py.
-The project has migrated from OpenRouter to OpenCode Zen for LLM API access.
-This file is kept for reference purposes only and is NOT functional.
-
-For the current implementation, see backend/opencode_zen.py
-"""
+"""OpenCode Zen API client for making LLM requests."""
 
 import asyncio
 import httpx
 from typing import List, Dict, Any, Optional
-
-# Deprecated configuration variables (no longer in config.py)
-# These are kept here for reference only
-OPENROUTER_API_KEY = None  # DEPRECATED: Use OPENCODE_API_KEY instead
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"  # DEPRECATED
+from .config import OPENCODE_API_KEY, OPENCODE_ZEN_BASE_URL
 
 
 async def query_model(
@@ -23,10 +12,10 @@ async def query_model(
     timeout: float = 120.0
 ) -> Optional[Dict[str, Any]]:
     """
-    Query a single model via OpenRouter API.
+    Query a single model via OpenCode Zen API.
 
     Args:
-        model: OpenRouter model identifier (e.g., "openai/gpt-4o")
+        model: OpenCode Zen model identifier (e.g., "gpt-5.2", "claude-sonnet-4-5")
         messages: List of message dicts with 'role' and 'content'
         timeout: Request timeout in seconds
 
@@ -34,7 +23,7 @@ async def query_model(
         Response dict with 'content' and optional 'reasoning_details', or None if failed
     """
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Authorization": f"Bearer {OPENCODE_API_KEY}",
         "Content-Type": "application/json",
     }
 
@@ -43,10 +32,18 @@ async def query_model(
         "messages": messages,
     }
 
+    # Route to appropriate endpoint based on model type
+    # Claude models use Anthropic-compatible endpoint
+    # Other models use OpenAI-compatible endpoint
+    if model.lower().startswith("claude"):
+        endpoint = f"{OPENCODE_ZEN_BASE_URL}/messages"
+    else:
+        endpoint = f"{OPENCODE_ZEN_BASE_URL}/responses"
+
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
-                OPENROUTER_API_URL,
+                endpoint,
                 headers=headers,
                 json=payload
             )
@@ -73,7 +70,7 @@ async def query_models_parallel(
     Query multiple models in parallel.
 
     Args:
-        models: List of OpenRouter model identifiers
+        models: List of OpenCode Zen model identifiers
         messages: List of message dicts to send to each model
 
     Returns:
