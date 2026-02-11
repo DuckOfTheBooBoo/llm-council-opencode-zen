@@ -3,15 +3,15 @@
 
 set -e
 
-OPENCODE_URL="${OPENCODE_SERVER_URL:-http://127.0.0.1:4096}"
+OPENCODE_SERVER_URL="${OPENCODE_SERVER_URL:-http://127.0.0.1:4096}"
 SPEC_FILE="openapi_spec.json"
 OUTPUT_DIR="opencode_client"
 
-echo "Fetching OpenAPI spec from ${OPENCODE_URL}/doc..."
+echo "Fetching OpenAPI spec from ${OPENCODE_SERVER_URL}/doc..."
 
 # Fetch the /doc page which contains the OpenAPI spec
-curl -s "${OPENCODE_URL}/doc" > doc.html || {
-    echo "Error: Could not fetch OpenAPI spec from ${OPENCODE_URL}/doc"
+curl -s "${OPENCODE_SERVER_URL}/doc" > doc.html || {
+    echo "Error: Could not fetch OpenAPI spec from ${OPENCODE_SERVER_URL}/doc"
     echo "Make sure 'opencode serve' is running"
     exit 1
 }
@@ -56,7 +56,7 @@ sys.exit(1)
     }
 else
     echo "Error: OpenAPI spec not found in the HTML response"
-    echo "Please manually save the spec from ${OPENCODE_URL}/doc to ${SPEC_FILE}"
+    echo "Please manually save the spec from ${OPENCODE_SERVER_URL}/doc to ${SPEC_FILE}"
     exit 1
 fi
 
@@ -80,4 +80,3 @@ echo "  pip install -e ."
 
 # Cleanup
 rm -f doc.html
-

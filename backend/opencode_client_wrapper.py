@@ -235,7 +235,10 @@ async def query_model(
         
         return {
             "content": content,
-            "reasoning_details": None  # OpenCode serve doesn't provide this in the same format
+            # OpenCode serve returns responses as parts (text/image/file).
+            # The reasoning_details field from OpenCode Zen API is not available.
+            # This maintains API compatibility but reasoning_details will always be None.
+            "reasoning_details": None
         }
         
     except Exception as e:
