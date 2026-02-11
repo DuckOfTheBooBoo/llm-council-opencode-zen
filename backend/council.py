@@ -1,7 +1,7 @@
 """3-stage LLM Council orchestration."""
 
 from typing import List, Dict, Any, Tuple
-from .opencode_zen import query_models_parallel, query_model
+from .opencode_client_wrapper import query_models_parallel, query_model
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL, MIN_COUNCIL_MODELS
 
 

@@ -5,25 +5,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# OpenCode Zen API key
-OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY")
+# OpenCode serve configuration
+# Server URL (defaults to local server)
+OPENCODE_SERVER_URL = os.getenv("OPENCODE_SERVER_URL", "http://127.0.0.1:4096")
 
-# OpenCode Zen API base URL
-OPENCODE_ZEN_BASE_URL = "https://opencode.ai/zen/v1"
+# Optional HTTP Basic Auth credentials
+OPENCODE_SERVER_USERNAME = os.getenv("OPENCODE_SERVER_USERNAME", "opencode")
+OPENCODE_SERVER_PASSWORD = os.getenv("OPENCODE_SERVER_PASSWORD")
 
-# Council members - list of OpenCode Zen model identifiers
+# Council members - list of model identifiers in format "provider:model"
+# Examples: "openai:gpt-4", "anthropic:claude-3-5-sonnet", "google:gemini-1.5-pro"
 # MINIMUM REQUIREMENT: At least 2 models are required for meaningful peer review
 COUNCIL_MODELS = [
-    "gpt-5.2",
-    "claude-sonnet-4-5",
-    "gemini-3-pro",
-    "qwen3-coder",
-    "gpt-5.1-codex",
+    "openai:gpt-4",
+    "anthropic:claude-3-5-sonnet",
+    "google:gemini-1.5-pro",
+    "openai:gpt-4-turbo",
 ]
 
 # Chairman model - synthesizes final response
 # Can be the same as one of the council models or a different model
-CHAIRMAN_MODEL = "gpt-5.2"
+CHAIRMAN_MODEL = "openai:gpt-4"
 
 # Data directory for conversation storage
 DATA_DIR = "data/conversations"
@@ -39,8 +41,8 @@ def validate_config() -> tuple[bool, str]:
     Returns:
         Tuple of (is_valid, error_message)
     """
-    if not OPENCODE_API_KEY:
-        return False, "OPENCODE_API_KEY is not set. Please configure your API key in .env file."
+    if not OPENCODE_SERVER_URL:
+        return False, "OPENCODE_SERVER_URL is not set. Please configure the server URL in .env file."
     
     if not COUNCIL_MODELS:
         return False, "COUNCIL_MODELS is empty. At least 2 council models are required."
