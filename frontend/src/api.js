@@ -112,4 +112,15 @@ export const api = {
       }
     }
   },
+
+  /**
+   * Get LLM Council configuration.
+   */
+  async getConfig() {
+    const response = await fetch(`${API_BASE}/api/config`);
+    if (!response.ok) {
+      throw new Error('Failed to get config');
+    }
+    return response.json();
+  },
 };

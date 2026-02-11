@@ -1,4 +1,10 @@
-"""OpenCode Zen API client for making LLM requests."""
+"""OpenCode Zen API client for making LLM requests.
+
+DEPRECATED: This module is deprecated. Use opencode_client_wrapper.py instead,
+which uses OpenCode serve with an OpenAPI-generated client.
+
+This file is kept for reference during migration.
+"""
 
 import asyncio
 import httpx

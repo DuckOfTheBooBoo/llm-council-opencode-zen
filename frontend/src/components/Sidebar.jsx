@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ConfigInfo from './ConfigInfo';
 import './Sidebar.css';
 
 export default function Sidebar({
@@ -38,6 +39,8 @@ export default function Sidebar({
           ))
         )}
       </div>
+
+      <ConfigInfo />
     </div>
   );
 }

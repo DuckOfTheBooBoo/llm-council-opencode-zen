@@ -1,8 +1,8 @@
 """3-stage LLM Council orchestration."""
 
 from typing import List, Dict, Any, Tuple
-from .opencode_zen import query_models_parallel, query_model
-from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
+from .opencode_client_wrapper import query_models_parallel, query_model
+from .config import COUNCIL_MODELS, CHAIRMAN_MODEL, MIN_COUNCIL_MODELS
 
 
 async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
@@ -303,6 +303,14 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
     Returns:
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
+    # Validate minimum model count
+    if len(COUNCIL_MODELS) < MIN_COUNCIL_MODELS:
+        error_msg = f"Insufficient council models configured. At least {MIN_COUNCIL_MODELS} models are required for meaningful peer review, but only {len(COUNCIL_MODELS)} configured."
+        return [], [], {
+            "model": "error",
+            "response": error_msg
+        }, {"error": error_msg}
+    
     # Stage 1: Collect individual responses
     stage1_results = await stage1_collect_responses(user_query)
 
@@ -311,6 +319,13 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
         return [], [], {
             "model": "error",
             "response": "All models failed to respond. Please try again."
+        }, {}
+    
+    # If fewer than minimum models responded, return error
+    if len(stage1_results) < MIN_COUNCIL_MODELS:
+        return stage1_results, [], {
+            "model": "error",
+            "response": f"Insufficient models responded successfully. At least {MIN_COUNCIL_MODELS} models are needed for peer review, but only {len(stage1_results)} responded."
         }, {}
 
     # Stage 2: Collect rankings

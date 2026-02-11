@@ -11,19 +11,26 @@ LLM Council is a 3-stage deliberation system where multiple LLMs collaboratively
 ### Backend Structure (`backend/`)
 
 **`config.py`**
-- Contains `COUNCIL_MODELS` (list of OpenCode Zen model identifiers)
+- Contains `COUNCIL_MODELS` (list of model identifiers in provider:model format)
 - Contains `CHAIRMAN_MODEL` (model that synthesizes final answer)
-- Uses environment variable `OPENCODE_API_KEY` from `.env`
+- Uses environment variables `OPENCODE_SERVER_URL`, `OPENCODE_SERVER_USERNAME`, `OPENCODE_SERVER_PASSWORD` from `.env`
 - Backend runs on **port 8001** (NOT 8000 - user had another app on 8000)
 
-**`opencode_zen.py`**
-- `query_model()`: Single async model query
+**`opencode_client_wrapper.py`** - OpenCode Serve Client
+- Wraps the OpenAPI-generated client (from `opencode_client/` directory)
+- `query_model()`: Single async model query via session/message API
 - `query_models_parallel()`: Parallel queries using `asyncio.gather()`
 - Returns dict with 'content' and optional 'reasoning_details'
 - Graceful degradation: returns None on failure, continues with successful responses
-- Automatically routes to correct endpoint based on model type:
-  - Claude models → `/messages` (Anthropic-compatible)
-  - Other models → `/responses` (OpenAI-compatible)
+- Creates a session for each query with session-based message API
+- Handles HTTP Basic Auth if OPENCODE_SERVER_PASSWORD is set
+- Async wrapper around sync generated client (uses run_in_executor)
+
+**OpenAPI Generated Client** (`opencode_client/` - excluded from git)
+- Generated from OpenAPI 3.1 spec using openapi-generator
+- Provides type-safe API calls: `create_session()`, `send_message()`, etc.
+- Regenerate using `./generate_openapi_client.sh` script
+- Located in parent directory and imported via sys.path manipulation
 
 **`council.py`** - The Core Logic
 - `stage1_collect_responses()`: Parallel queries to all council models
@@ -44,9 +51,10 @@ LLM Council is a 3-stage deliberation system where multiple LLMs collaboratively
 - Note: metadata (label_to_model, aggregate_rankings) is NOT persisted to storage, only returned via API
 
 **`main.py`**
-- FastAPI app with CORS enabled for localhost:5173 and localhost:3000
+- FastAPI app with CORS enabled for localhost:5173, 5174, and localhost:3000
 - POST `/api/conversations/{id}/message` returns metadata in addition to stages
 - Metadata includes: label_to_model mapping and aggregate_rankings
+- GET `/api/config` endpoint exposes current model configuration
 
 ### Frontend Structure (`frontend/src/`)
 
@@ -114,10 +122,24 @@ This strict format allows reliable parsing while still getting thoughtful evalua
 
 ## Important Implementation Details
 
+### OpenCode Serve Integration
+- Uses local `opencode serve` process (not cloud API)
+- Server runs on `http://127.0.0.1:4096` by default
+- OpenAPI client generated from server's `/doc` endpoint
+- Session-based API: each query creates a session
+- Model format: `provider:model` (e.g., `openai:gpt-4`, `anthropic:claude-3-5-sonnet`)
+
+### Generated Client Management
+- Client code is in `opencode_client/` directory (excluded from git)
+- Regenerate with `./generate_openapi_client.sh` when server updates
+- Wrapper in `opencode_client_wrapper.py` provides async interface
+- Uses `run_in_executor` to wrap sync generated API calls
+
 ### Relative Imports
 All backend modules use relative imports (e.g., `from .config import ...`) not absolute imports. This is critical for Python's module system to work correctly when running as `python -m backend.main`.
 
 ### Port Configuration
+- OpenCode serve: 4096 (default)
 - Backend: 8001 (changed from 8000 to avoid conflict)
 - Frontend: 5173 (Vite default)
 - Update both `backend/main.py` and `frontend/src/api.js` if changing
@@ -126,7 +148,7 @@ All backend modules use relative imports (e.g., `from .config import ...`) not a
 All ReactMarkdown components must be wrapped in `<div className="markdown-content">` for proper spacing. This class is defined globally in `index.css`.
 
 ### Model Configuration
-Models are hardcoded in `backend/config.py`. Chairman can be same or different from council members. The current default is Gemini as chairman per user preference.
+Models are configured in `backend/config.py` using provider:model format. Chairman can be same or different from council members. Use models available in your OpenCode serve instance.
 
 ## Common Gotchas
 
@@ -134,6 +156,8 @@ Models are hardcoded in `backend/config.py`. Chairman can be same or different f
 2. **CORS Issues**: Frontend must match allowed origins in `main.py` CORS middleware
 3. **Ranking Parse Failures**: If models don't follow format, fallback regex extracts any "Response X" patterns in order
 4. **Missing Metadata**: Metadata is ephemeral (not persisted), only available in API responses
+5. **OpenCode Serve Not Running**: Ensure `opencode serve` is running before starting the application
+6. **Generated Client Missing**: Run `./generate_openapi_client.sh` to generate the client if missing
 
 ## Future Enhancement Ideas
 
@@ -142,18 +166,24 @@ Models are hardcoded in `backend/config.py`. Chairman can be same or different f
 - Export conversations to markdown/PDF
 - Model performance analytics over time
 - Custom ranking criteria (not just accuracy/insight)
-- Support for reasoning models (o1, etc.) with special handling
+- Support for reasoning models with special handling
+- Session reuse across queries for conversation context
 
 ## Testing Notes
 
-Use a test script to verify API connectivity and test different model identifiers before adding to council. The OpenCode Zen API is compatible with OpenAI's API format for most models, with special handling for Claude models via the `/messages` endpoint.
+Before testing:
+1. Start `opencode serve` in a separate terminal
+2. Generate the OpenAPI client: `./generate_openapi_client.sh`
+3. Configure models in `backend/config.py` that match your OpenCode providers
+
+Test different model identifiers using the format `provider:model`. Check available providers at `http://localhost:4096/config/providers`.
 
 ## Data Flow Summary
 
 ```
 User Query
     ↓
-Stage 1: Parallel queries → [individual responses]
+Stage 1: Parallel queries → [individual responses via sessions]
     ↓
 Stage 2: Anonymize → Parallel ranking queries → [evaluations + parsed rankings]
     ↓
@@ -166,4 +196,4 @@ Return: {stage1, stage2, stage3, metadata}
 Frontend: Display with tabs + validation UI
 ```
 
-The entire flow is async/parallel where possible to minimize latency.
+The entire flow is async/parallel where possible to minimize latency. Each model query creates its own session in OpenCode serve.

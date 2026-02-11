@@ -1,5 +1,6 @@
 """FastAPI backend for LLM Council."""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -11,13 +12,35 @@ import asyncio
 
 from . import storage
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
+from .config import validate_config, get_config_info
 
-app = FastAPI(title="LLM Council API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown."""
+    # Startup: Validate configuration
+    is_valid, error_message = validate_config()
+    if not is_valid:
+        print(f"⚠️  Configuration Error: {error_message}")
+        print("⚠️  The application may not function correctly.")
+    else:
+        config_info = get_config_info()
+        print(f"✓ Configuration validated successfully")
+        print(f"✓ Council models: {config_info['council_models_count']}")
+        print(f"✓ Chairman model: {config_info['chairman_model']}")
+    
+    yield
+    
+    # Shutdown: cleanup if needed
+    pass
+
+
+app = FastAPI(title="LLM Council API", lifespan=lifespan)
 
 # Enable CORS for local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,6 +77,24 @@ class Conversation(BaseModel):
 async def root():
     """Health check endpoint."""
     return {"status": "ok", "service": "LLM Council API"}
+
+
+@app.get("/api/config")
+async def get_config():
+    """
+    Get current LLM Council configuration.
+    Returns information about configured models and requirements.
+    """
+    config_info = get_config_info()
+    is_valid, error_message = validate_config()
+    
+    return {
+        **config_info,
+        "validation": {
+            "is_valid": is_valid,
+            "error_message": error_message if not is_valid else None
+        }
+    }
 
 
 @app.get("/api/conversations", response_model=List[ConversationMetadata])
