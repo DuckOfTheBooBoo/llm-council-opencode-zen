@@ -27,45 +27,24 @@ This application uses [OpenCode serve](https://www.opencodecn.com/docs/server) a
 
 **Start the server:**
 ```bash
-# Local only (default, binds to 127.0.0.1:4096)
-opencode serve
-
-# Or for network access (accessible from other machines/containers)
-opencode serve --hostname 0.0.0.0 --port 4096
-```
-
-**Optional: Enable HTTP Basic Auth:**
-```bash
-export OPENCODE_SERVER_PASSWORD=your_password
-export OPENCODE_SERVER_USERNAME=opencode  # Optional, defaults to "opencode"
+# The SDK uses port 54321 by default
 opencode serve
 ```
 
-The server will be available at `http://127.0.0.1:4096` by default.
+The server will be available at `http://localhost:54321` by default.
 
-### 2. Generate OpenAPI Client
-
-The application uses a Python client generated from OpenCode serve's OpenAPI specification.
-
-**Generate the client:**
-```bash
-./generate_openapi_client.sh
-```
-
-This script will:
-1. Fetch the OpenAPI spec from your running `opencode serve` instance
-2. Generate a Python client using Docker and openapi-generator
-3. Place the generated client in `opencode_client/` directory
-
-**Note:** The generated client directory is excluded from git. Regenerate as needed.
-
-### 3. Install Dependencies
+### 2. Install Dependencies
 
 The project uses [uv](https://docs.astral.sh/uv/) for Python dependency management.
 
 **Backend:**
 ```bash
 uv sync
+```
+
+Alternatively, you can use pip:
+```bash
+pip install -r pyproject.toml  # Or install directly: pip install opencode-ai fastapi uvicorn python-dotenv httpx pydantic
 ```
 
 **Frontend:**
@@ -75,20 +54,16 @@ npm install
 cd ..
 ```
 
-### 4. Configure Environment
+### 3. Configure Environment
 
 Create a `.env` file in the project root:
 
 ```bash
-# OpenCode serve URL (defaults to http://127.0.0.1:4096 if not set)
-OPENCODE_SERVER_URL=http://127.0.0.1:4096
-
-# Optional HTTP Basic Auth (leave empty if not using auth)
-OPENCODE_SERVER_USERNAME=opencode
-OPENCODE_SERVER_PASSWORD=
+# OpenCode serve URL (defaults to http://localhost:54321 if not set)
+OPENCODE_SERVER_URL=http://localhost:54321
 ```
 
-### 5. Configure Models (Optional)
+### 4. Configure Models (Optional)
 
 Edit `backend/config.py` to customize the council:
 
@@ -135,7 +110,7 @@ Then open http://localhost:5173 in your browser.
 
 ## Tech Stack
 
-- **Backend:** FastAPI (Python 3.10+), OpenCode serve with OpenAPI-generated client
+- **Backend:** FastAPI (Python 3.10+), OpenCode serve with official Python SDK ([opencode-ai](https://github.com/anomalyco/opencode-sdk-python))
 - **Frontend:** React + Vite, react-markdown for rendering
 - **Storage:** JSON files in `data/conversations/`
 - **Package Management:** uv for Python, npm for JavaScript
@@ -168,17 +143,15 @@ This application uses OpenCode serve as the local LLM server, which provides:
 - **Single API** for multiple LLM providers (OpenAI, Anthropic, Google, etc.)
 - **Local execution** with your own API keys
 - **Session-based conversations** with message history
-- **OpenAPI 3.1 specification** for type-safe client generation
+- **Official Python SDK** for type-safe API calls
 
-### Generated Client
+### Official OpenCode SDK
 
-The Python client is generated from OpenCode serve's OpenAPI spec, providing:
-- **Type-safe API calls** with full IDE support
+The application uses the official [OpenCode Python SDK](https://github.com/anomalyco/opencode-sdk-python), providing:
+- **Type-safe API calls** with full IDE support and autocomplete
 - **Automatic serialization/deserialization** of requests and responses
-- **Built-in authentication** support (HTTP Basic Auth)
-- **Consistent error handling**
+- **Async/sync support** for flexible integration
+- **Consistent error handling** and retry logic
+- **Regular updates** from the OpenCode team
 
-To regenerate the client (e.g., after server updates):
-```bash
-./generate_openapi_client.sh
-```
+The SDK is automatically installed via pip when you run `uv sync` or install dependencies.
