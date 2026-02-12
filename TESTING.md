@@ -1,6 +1,6 @@
-# Testing Guide for OpenCode Serve Migration
+# Testing Guide for OpenCode SDK Integration
 
-This document provides instructions for manually testing the OpenCode serve integration.
+This document provides instructions for manually testing the OpenCode SDK integration.
 
 ## Prerequisites
 
@@ -16,94 +16,47 @@ This document provides instructions for manually testing the OpenCode serve inte
 
 ### Local Testing (Default)
 ```bash
-# Start on default port (127.0.0.1:4096)
+# Start on default port (localhost:54321)
 opencode serve
 ```
 
 **Expected output:**
 ```
 OpenCode Server starting...
-OpenCode Server listening on http://127.0.0.1:4096
-Documentation available at http://127.0.0.1:4096/doc
+OpenCode Server listening on http://localhost:54321
+Documentation available at http://localhost:54321/doc
 ```
 
 Verify the server is running before proceeding to the next step.
 
-### With Authentication (Optional)
-```bash
-# Enable HTTP Basic Auth
-export OPENCODE_SERVER_PASSWORD=your_secure_password
-export OPENCODE_SERVER_USERNAME=opencode  # Optional, defaults to "opencode"
-opencode serve
-```
-
-### For Network Access (Optional)
-```bash
-# Allow access from other machines/containers
-opencode serve --hostname 0.0.0.0 --port 4096
-```
-
-The server should start and display:
-```
-OpenCode Server listening on http://127.0.0.1:4096
-```
-
-## Step 2: Verify Server Health
+## Step 2: Install Dependencies
 
 ```bash
-# Check health endpoint
-curl http://localhost:4096/global/health
+# Install project dependencies with uv
+uv sync
 
-# Expected output:
-# {"healthy": true, "version": "..."}
+# Or with pip (from project root)
+pip install -e .
 ```
 
-## Step 3: Check Available Providers
+The official OpenCode SDK (`opencode-ai`) will be installed automatically.
 
-```bash
-# List available providers and models
-curl http://localhost:4096/config/providers
-
-# This shows what providers are configured and their default models
-```
-
-## Step 4: Generate OpenAPI Client
-
-```bash
-# From the project root
-./generate_openapi_client.sh
-```
-
-This script will:
-1. Fetch the OpenAPI spec from the running server
-2. Generate a Python client using Docker and openapi-generator
-3. Place the generated client in `opencode_client/` directory
-
-**Troubleshooting:**
-- If the script fails to extract the spec from HTML, manually visit http://localhost:4096/doc
-- Save the OpenAPI JSON spec to `openapi_spec.json`
-- Re-run the generation script
-
-## Step 5: Configure Environment
+## Step 3: Configure Environment
 
 Create/update `.env` file:
 
 ```bash
-# OpenCode serve URL
-OPENCODE_SERVER_URL=http://127.0.0.1:4096
-
-# Optional: HTTP Basic Auth (if you set OPENCODE_SERVER_PASSWORD when starting serve)
-OPENCODE_SERVER_USERNAME=opencode
-OPENCODE_SERVER_PASSWORD=your_secure_password
+# OpenCode serve URL (defaults to http://localhost:54321 if not set)
+OPENCODE_SERVER_URL=http://localhost:54321
 ```
 
-## Step 6: Configure Models
+## Step 4: Configure Models
 
 Edit `backend/config.py` to match your available providers:
 
 ```python
 # Use provider:model format
-# Check available models at http://localhost:4096/config/providers
+# Check available models at http://localhost:54321/config/providers
 COUNCIL_MODELS = [
     "openai:gpt-4",
     "anthropic:claude-3-5-sonnet",
@@ -116,38 +69,17 @@ CHAIRMAN_MODEL = "openai:gpt-4"
 
 **Important:** Only use models that are available in your OpenCode serve instance.
 
-## Step 7: Install Python Dependencies
-
-```bash
-# Install project dependencies
-uv sync
-
-# Install the generated OpenAPI client
-cd opencode_client
-pip install -e .
-cd ..
-```
-
-## Step 8: Test Backend Connectivity
+## Step 5: Test Backend Connectivity
 
 Create a test script `test_opencode.py`:
 
 ```python
 import asyncio
-from backend.opencode_client_wrapper import check_health, query_model
+from backend.opencode_client_wrapper import query_model
 
 async def test():
-    # Test health check
-    print("Testing health check...")
-    healthy = await check_health()
-    print(f"Server healthy: {healthy}")
-    
-    if not healthy:
-        print("Server is not healthy. Make sure 'opencode serve' is running.")
-        return
-    
-    # Test single model query
-    print("\nTesting model query...")
+    # Test with a simple query
+    print("Testing OpenCode SDK integration...")
     messages = [{"role": "user", "content": "Hello! Please respond with 'Hello back!'"}]
     response = await query_model("openai:gpt-4", messages)
     
@@ -167,14 +99,11 @@ python test_opencode.py
 
 **Expected output:**
 ```
-Testing health check...
-Server healthy: True
-
-Testing model query...
+Testing OpenCode SDK integration...
 Model response: Hello back!
 ```
 
-## Step 9: Start the Application
+## Step 6: Start the Application
 
 ### Terminal 1: Backend
 ```bash
@@ -201,7 +130,7 @@ VITE ready in XXX ms
 ➜  Local:   http://localhost:5173/
 ```
 
-## Step 10: Test Full Council Flow
+## Step 7: Test Full Council Flow
 
 1. Open http://localhost:5173 in your browser
 2. Click "New Conversation"
@@ -220,27 +149,21 @@ VITE ready in XXX ms
 **Cause:** OpenCode serve is not running or URL is incorrect
 **Solution:**
 1. Verify `opencode serve` is running
-2. Check OPENCODE_SERVER_URL in `.env`
-3. Test health endpoint: `curl http://localhost:4096/global/health`
+2. Check OPENCODE_SERVER_URL in `.env` (default: http://localhost:54321)
+3. Test server: `curl http://localhost:54321/config/providers`
 
-### Issue: "Error importing generated OpenCode client"
-**Cause:** OpenAPI client not generated
+### Issue: "Error importing OpenCode SDK"
+**Cause:** SDK not installed
 **Solution:**
-1. Run `./generate_openapi_client.sh`
-2. Install the client: `cd opencode_client && pip install -e . && cd ..`
+1. Run `pip install opencode-ai`
+2. Or run `uv sync` to install all dependencies
 
 ### Issue: "Model [provider:model] not available"
 **Cause:** Model not configured in OpenCode serve
 **Solution:**
-1. Check available models: `curl http://localhost:4096/config/providers`
+1. Check available models: `curl http://localhost:54321/config/providers`
 2. Update `backend/config.py` with available models
 3. Ensure provider API keys are configured in OpenCode
-
-### Issue: Authentication errors (401 Unauthorized)
-**Cause:** Mismatched authentication configuration
-**Solution:**
-1. If using auth, ensure OPENCODE_SERVER_PASSWORD matches server password
-2. If not using auth, leave OPENCODE_SERVER_PASSWORD empty in `.env`
 
 ### Issue: "No response from model"
 **Cause:** Model query timeout or failure
@@ -285,9 +208,6 @@ COUNCIL_MODELS = [
 # Stop backend (Ctrl+C)
 
 # Stop frontend (Ctrl+C)
-
-# Optional: Clean generated client to regenerate fresh
-rm -rf opencode_client/
 ```
 
 ## Next Steps
@@ -295,6 +215,5 @@ rm -rf opencode_client/
 After successful testing:
 1. Document any issues encountered
 2. Update configuration as needed
-3. Consider removing or archiving old `opencode_zen.py` file
-4. Run security checks
-5. Deploy to production environment if applicable
+3. Run security checks with code review tools
+4. Deploy to production environment if applicable

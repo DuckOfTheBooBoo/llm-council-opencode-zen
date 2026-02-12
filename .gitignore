@@ -15,12 +15,6 @@ wheels/
 # Data files
 data/
 
-# OpenAPI generated client (regenerate as needed)
-opencode_client/
-
-# OpenAPI spec (fetched from server)
-openapi_spec.json
-
 # Frontend
 frontend/node_modules/
 frontend/dist/

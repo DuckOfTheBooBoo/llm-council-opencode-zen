@@ -13,24 +13,24 @@ LLM Council is a 3-stage deliberation system where multiple LLMs collaboratively
 **`config.py`**
 - Contains `COUNCIL_MODELS` (list of model identifiers in provider:model format)
 - Contains `CHAIRMAN_MODEL` (model that synthesizes final answer)
-- Uses environment variables `OPENCODE_SERVER_URL`, `OPENCODE_SERVER_USERNAME`, `OPENCODE_SERVER_PASSWORD` from `.env`
+- Uses environment variable `OPENCODE_SERVER_URL` from `.env`
 - Backend runs on **port 8001** (NOT 8000 - user had another app on 8000)
 
-**`opencode_client_wrapper.py`** - OpenCode Serve Client
-- Wraps the OpenAPI-generated client (from `opencode_client/` directory)
-- `query_model()`: Single async model query via session/message API
+**`opencode_client_wrapper.py`** - OpenCode SDK Wrapper
+- Wraps the official OpenCode Python SDK (`opencode-ai` package)
+- `query_model()`: Single async model query via session.create() and session.chat() API
 - `query_models_parallel()`: Parallel queries using `asyncio.gather()`
 - Returns dict with 'content' and optional 'reasoning_details'
 - Graceful degradation: returns None on failure, continues with successful responses
 - Creates a session for each query with session-based message API
-- Handles HTTP Basic Auth if OPENCODE_SERVER_PASSWORD is set
-- Async wrapper around sync generated client (uses run_in_executor)
+- Uses AsyncOpencode client for async operations
 
-**OpenAPI Generated Client** (`opencode_client/` - excluded from git)
-- Generated from OpenAPI 3.1 spec using openapi-generator
-- Provides type-safe API calls: `create_session()`, `send_message()`, etc.
-- Regenerate using `./generate_openapi_client.sh` script
-- Located in parent directory and imported via sys.path manipulation
+**Official OpenCode SDK** (`opencode-ai` package)
+- Official Python SDK from https://github.com/anomalyco/opencode-sdk-python
+- Provides type-safe API calls: `session.create()`, `session.chat()`, etc.
+- Installed via pip/uv: `pip install opencode-ai`
+- Uses Pydantic models for requests and responses
+- Async/sync support via AsyncOpencode and Opencode classes
 
 **`council.py`** - The Core Logic
 - `stage1_collect_responses()`: Parallel queries to all council models
@@ -124,22 +124,22 @@ This strict format allows reliable parsing while still getting thoughtful evalua
 
 ### OpenCode Serve Integration
 - Uses local `opencode serve` process (not cloud API)
-- Server runs on `http://127.0.0.1:4096` by default
-- OpenAPI client generated from server's `/doc` endpoint
+- Server runs on `http://localhost:54321` by default (OpenCode SDK default port)
+- Official OpenCode SDK from https://github.com/anomalyco/opencode-sdk-python
 - Session-based API: each query creates a session
 - Model format: `provider:model` (e.g., `openai:gpt-4`, `anthropic:claude-3-5-sonnet`)
 
-### Generated Client Management
-- Client code is in `opencode_client/` directory (excluded from git)
-- Regenerate with `./generate_openapi_client.sh` when server updates
-- Wrapper in `opencode_client_wrapper.py` provides async interface
-- Uses `run_in_executor` to wrap sync generated API calls
+### Official SDK Management
+- SDK is `opencode-ai` package installed via pip
+- No generation step needed - SDK is maintained by OpenCode team
+- Wrapper in `opencode_client_wrapper.py` provides query interface
+- Uses AsyncOpencode client for async operations
 
 ### Relative Imports
 All backend modules use relative imports (e.g., `from .config import ...`) not absolute imports. This is critical for Python's module system to work correctly when running as `python -m backend.main`.
 
 ### Port Configuration
-- OpenCode serve: 4096 (default)
+- OpenCode serve: 54321 (SDK default)
 - Backend: 8001 (changed from 8000 to avoid conflict)
 - Frontend: 5173 (Vite default)
 - Update both `backend/main.py` and `frontend/src/api.js` if changing
@@ -157,7 +157,7 @@ Models are configured in `backend/config.py` using provider:model format. Chairm
 3. **Ranking Parse Failures**: If models don't follow format, fallback regex extracts any "Response X" patterns in order
 4. **Missing Metadata**: Metadata is ephemeral (not persisted), only available in API responses
 5. **OpenCode Serve Not Running**: Ensure `opencode serve` is running before starting the application
-6. **Generated Client Missing**: Run `./generate_openapi_client.sh` to generate the client if missing
+6. **Wrong Port**: OpenCode SDK uses port 54321 by default, not 4096. Update OPENCODE_SERVER_URL if needed
 
 ## Future Enhancement Ideas
 
@@ -172,11 +172,11 @@ Models are configured in `backend/config.py` using provider:model format. Chairm
 ## Testing Notes
 
 Before testing:
-1. Start `opencode serve` in a separate terminal
-2. Generate the OpenAPI client: `./generate_openapi_client.sh`
+1. Install OpenCode SDK: `pip install opencode-ai`
+2. Start `opencode serve` in a separate terminal
 3. Configure models in `backend/config.py` that match your OpenCode providers
 
-Test different model identifiers using the format `provider:model`. Check available providers at `http://localhost:4096/config/providers`.
+Test different model identifiers using the format `provider:model`. Check available providers at `http://localhost:54321/config/providers`.
 
 ## Data Flow Summary
 

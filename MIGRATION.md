@@ -1,160 +1,163 @@
-# Migration Summary: OpenCode Zen → OpenCode Serve
+# Migration Summary: Custom OpenAPI Client → Official OpenCode SDK
 
-This document summarizes the migration from OpenCode Zen cloud API to local OpenCode serve with OpenAPI-generated SDK.
+This document summarizes the migration from custom OpenAPI-generated client to the official OpenCode Python SDK.
 
 ## What Changed
 
-### Before (OpenCode Zen Cloud API)
+### Before (Custom OpenAPI-Generated Client)
 ```python
-# Configuration
-OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY")
-OPENCODE_ZEN_BASE_URL = "https://opencode.ai/zen/v1"
+# Manual client generation required
+./generate_openapi_client.sh
 
-COUNCIL_MODELS = [
-    "gpt-5.2",
-    "claude-sonnet-4-5",
-    "gemini-3-pro",
-]
+# Import from generated package
+from opencode_client import ApiClient, Configuration
+from opencode_client.api.default_api import DefaultApi
+
+# Configuration
+OPENCODE_SERVER_URL = "http://127.0.0.1:4096"
+OPENCODE_SERVER_USERNAME = "opencode"
+OPENCODE_SERVER_PASSWORD = os.getenv("OPENCODE_SERVER_PASSWORD")
 ```
 
-### After (OpenCode Serve Local)
+### After (Official OpenCode SDK)
 ```python
-# Configuration
-OPENCODE_SERVER_URL = os.getenv("OPENCODE_SERVER_URL", "http://127.0.0.1:4096")
-OPENCODE_SERVER_USERNAME = os.getenv("OPENCODE_SERVER_USERNAME", "opencode")
-OPENCODE_SERVER_PASSWORD = os.getenv("OPENCODE_SERVER_PASSWORD")
+# Install from PyPI
+pip install opencode-ai
 
-COUNCIL_MODELS = [
-    "openai:gpt-4",
-    "anthropic:claude-3-5-sonnet",
-    "google:gemini-1.5-pro",
-]
+# Import from official package
+from opencode_ai import AsyncOpencode
+from opencode_ai.types import TextPartInputParam
+
+# Configuration
+OPENCODE_SERVER_URL = "http://localhost:54321"  # SDK default port
 ```
 
 ## Key Benefits
 
-1. **Type Safety**
-   - OpenAPI-generated client provides full type hints
-   - IDE autocomplete for all API methods
-   - Compile-time error checking
+1. **No Generation Required**
+   - SDK is pre-built and maintained by OpenCode team
+   - No Docker or openapi-generator needed
+   - Simpler setup and deployment
 
-2. **Local Control**
-   - No dependency on cloud services
-   - Full control over infrastructure
-   - Faster response times (local execution)
+2. **Official Support**
+   - Actively maintained by the OpenCode team
+   - Regular updates and bug fixes
+   - Better documentation and examples
 
-3. **Flexibility**
-   - Support for multiple LLM providers
-   - Easy to add/remove providers
-   - Session-based conversations
+3. **Type Safety**
+   - Pydantic models for all requests and responses
+   - Full type hints for IDE autocomplete
+   - Better error messages and validation
 
-4. **Security**
-   - Optional HTTP Basic Auth
-   - No API keys sent to cloud
-   - Local data processing
+4. **Async Native**
+   - Built-in async/await support via AsyncOpencode
+   - No need for run_in_executor workarounds
+   - Better performance for concurrent requests
 
 ## Migration Steps
 
-For users migrating from OpenCode Zen to OpenCode serve:
+For users migrating from the custom client to the official SDK:
 
-### 1. Install OpenCode
+### 1. Remove Generated Client
 ```bash
-# Follow instructions at https://www.opencodecn.com/
+# Remove the generated client directory (if it exists)
+rm -rf opencode_client/
 ```
 
-### 2. Start OpenCode Serve
+### 2. Install Official SDK
 ```bash
-opencode serve
+# With pip
+pip install opencode-ai
+
+# Or with uv
+uv sync  # Will install from pyproject.toml
 ```
 
-### 3. Generate OpenAPI Client
+### 3. Update Environment Variables
 ```bash
-./generate_openapi_client.sh
-```
-
-### 4. Update Environment Variables
-```bash
-# Old .env
-OPENCODE_API_KEY=sk-...
-
-# New .env
+# Old .env (custom client)
 OPENCODE_SERVER_URL=http://127.0.0.1:4096
-OPENCODE_SERVER_PASSWORD=  # Optional
+OPENCODE_SERVER_USERNAME=opencode
+OPENCODE_SERVER_PASSWORD=optional_password
+
+# New .env (official SDK)
+OPENCODE_SERVER_URL=http://localhost:54321  # SDK default port
+# Authentication removed - SDK handles auth differently if needed
 ```
 
-### 5. Update Model Configuration
-Edit `backend/config.py`:
-```python
-# Change from:
-COUNCIL_MODELS = ["gpt-5.2", "claude-sonnet-4-5"]
-
-# To:
-COUNCIL_MODELS = ["openai:gpt-4", "anthropic:claude-3-5-sonnet"]
-```
-
-### 6. Test
-```bash
-python test_opencode.py  # See TESTING.md
-```
+### 4. No Code Changes Required
+The wrapper in `opencode_client_wrapper.py` has been updated to use the official SDK, but the external API remains the same. Your application code doesn't need changes.
 
 ## Architecture Changes
 
 ### Request Flow
 
-**Before (OpenCode Zen):**
-```
-App → opencode_zen.py → OpenCode Zen Cloud API → LLM Providers
-```
-
-**After (OpenCode Serve):**
+**Before (Custom Client):**
 ```
 App → opencode_client_wrapper.py → Generated Client → OpenCode Serve → LLM Providers
-                                                              ↓
-                                                         (local process)
+                                           ↓
+                                   (requires generation)
 ```
 
-### Session Management
+**After (Official SDK):**
+```
+App → opencode_client_wrapper.py → Official SDK → OpenCode Serve → LLM Providers
+                                         ↓
+                                  (installed from PyPI)
+```
+
+### Client Management
 
 **Before:**
-- Stateless API calls
-- No conversation context
+- Generated client in `opencode_client/` directory (excluded from git)
+- Requires Docker and openapi-generator
+- Manual regeneration needed for updates
+- Sync client wrapped with run_in_executor for async
 
 **After:**
-- Session-based conversations
-- Each query creates a session
-- Message history maintained
+- SDK installed via pip: `pip install opencode-ai`
+- No generation step required
+- Updates via standard pip upgrade
+- Native async support via AsyncOpencode
 
 ## Files Changed
 
-### New Files
-- `backend/opencode_client_wrapper.py` - Wrapper around generated client
-- `generate_openapi_client.sh` - Script to generate client
-- `openapi_spec.json` - OpenAPI specification (excluded from git)
-- `opencode_client/` - Generated client directory (excluded from git)
-- `TESTING.md` - Comprehensive testing guide
+### Removed/Deprecated
+- `generate_openapi_client.sh` - No longer needed (now shows deprecation message)
+- `opencode_client/` directory - No longer generated
+- `openapi_spec.json` - No longer needed
 
 ### Modified Files
-- `backend/config.py` - Updated configuration
-- `backend/council.py` - Updated imports
-- `backend/opencode_zen.py` - Marked as deprecated
+- `pyproject.toml` - Added `opencode-ai` dependency
+- `backend/opencode_client_wrapper.py` - Updated to use official SDK
+- `backend/config.py` - Removed auth configuration, updated default port
 - `.env.example` - Updated environment variables
-- `.gitignore` - Added generated files
-- `README.md` - Updated documentation
+- `.gitignore` - Removed generated client references
+- `README.md` - Updated setup instructions
 - `CLAUDE.md` - Updated technical notes
+- `TESTING.md` - Updated testing guide
+- `MIGRATION.md` - Updated migration guide
+
+### Unchanged Files
+- `backend/council.py` - No changes needed (uses wrapper interface)
+- `backend/storage.py` - No changes
+- Frontend files - No changes
 
 ## Breaking Changes
 
 ### Configuration
-- `OPENCODE_API_KEY` → `OPENCODE_SERVER_URL`
-- Model format: `"model"` → `"provider:model"`
+- Model format unchanged: `"provider:model"` (e.g., `"openai:gpt-4"`)
+- Default port changed: `4096` → `54321` (OpenCode SDK default)
+- Authentication configuration removed (simpler setup)
 
 ### Environment
-- Requires `opencode serve` to be running
-- Requires OpenAPI client generation step
+- No longer requires Docker for client generation
+- No longer requires openapi-generator
+- Simpler dependency installation
 
 ### Dependencies
-- No longer uses `opencode_zen.py` module
-- Requires generated `opencode_client` package
+- Removed: Custom generated `opencode_client` package
+- Added: Official `opencode-ai` package from PyPI
 
 ## Compatibility
 
@@ -173,96 +176,64 @@ App → opencode_client_wrapper.py → Generated Client → OpenCode Serve → L
 
 ## Rollback Plan
 
-If needed, to rollback to OpenCode Zen:
+If needed, to rollback to the custom OpenAPI client:
 
-1. Restore old configuration:
-   ```python
-   # In backend/config.py
-   OPENCODE_API_KEY = os.getenv("OPENCODE_API_KEY")
-   COUNCIL_MODELS = ["gpt-5.2", "claude-sonnet-4-5"]
-   ```
+1. Checkout the previous version from git
+2. Run `./generate_openapi_client.sh` to generate the client
+3. Update `.env` with old configuration
+4. Install generated client: `cd opencode_client && pip install -e .`
 
-2. Update imports:
-   ```python
-   # In backend/council.py
-   from .opencode_zen import query_models_parallel, query_model
-   ```
-
-3. Update `.env`:
-   ```bash
-   OPENCODE_API_KEY=your_api_key_here
-   ```
+Note: The official SDK is recommended for better maintainability and support.
 
 ## Performance Notes
 
 ### Latency
-- **OpenCode Zen**: ~2-5s per model query (network latency)
-- **OpenCode Serve**: ~1-3s per model query (local, depends on model)
+- **Custom Client**: ~1-3s per model query (depends on local OpenCode serve)
+- **Official SDK**: Similar performance, with better async handling
 
 ### Concurrency
 - Both support parallel queries via `asyncio.gather()`
-- OpenCode Serve may be faster due to local execution
+- Official SDK has native async support (no run_in_executor overhead)
+- Potentially better performance under high concurrency
 
 ### Resource Usage
-- OpenCode Serve runs as local process
-- Memory usage depends on models being used
-- CPU usage for local model inference (if applicable)
-
-## Security Considerations
-
-### OpenCode Zen (Cloud)
-- API key transmitted over HTTPS
-- Data sent to cloud service
-- Vendor security policies apply
-
-### OpenCode Serve (Local)
-- Optional HTTP Basic Auth
-- All data processed locally
-- User controls security policies
-- Network exposure configurable
+- Official SDK: Lighter footprint (no generated code)
+- Faster installation (no generation step)
+- Smaller repository size
 
 ## Troubleshooting
 
 ### Common Issues
 
-**"Failed to import opencode_client"**
-→ Run `./generate_openapi_client.sh`
+**"Failed to import opencode_ai"**
+→ Run `pip install opencode-ai`
 
-**"Connection refused to localhost:4096"**
-→ Start `opencode serve`
+**"Connection refused to localhost:54321"**
+→ Start `opencode serve` (uses port 54321 by default)
 
 **"Model not available"**
-→ Check `curl http://localhost:4096/config/providers`
+→ Check `curl http://localhost:54321/config/providers`
 
-**"Authentication failed"**
-→ Verify OPENCODE_SERVER_PASSWORD matches server
+**"Wrong port"**
+→ Set `OPENCODE_SERVER_URL=http://localhost:54321` in `.env`
 
 See TESTING.md for detailed troubleshooting.
 
 ## Future Improvements
 
-1. **Caching**: Cache generated OpenAPI client
-2. **Session Reuse**: Reuse sessions across queries
-3. **Streaming**: Implement SSE for real-time responses
-4. **Health Monitoring**: Add periodic health checks
-5. **Auto-reconnect**: Handle server restarts gracefully
+1. **SDK Features**: Leverage new SDK features as they're released by OpenCode team
+2. **Streaming**: Implement SSE for real-time responses when SDK supports it
+3. **Error Recovery**: Better error handling with SDK's built-in retry logic
+4. **Monitoring**: Use SDK's logging capabilities for better observability
 
 ## References
 
+- [OpenCode Python SDK](https://github.com/anomalyco/opencode-sdk-python)
 - [OpenCode Documentation](https://www.opencodecn.com/docs/server)
-- [OpenAPI Generator](https://openapi-generator.tech/)
+- [SDK on PyPI](https://pypi.org/project/opencode-ai/)
 - [Testing Guide](TESTING.md)
 - [Technical Notes](CLAUDE.md)
 
-## Support
-
-For issues:
-1. Check TESTING.md for common problems
-2. Verify `opencode serve` is running
-3. Check server logs for errors
-4. Review generated client documentation
-5. File an issue on GitHub with logs
-
 ## Conclusion
 
-The migration to OpenCode serve provides better type safety, local control, and flexibility while maintaining full compatibility with the existing application logic. The OpenAPI-generated client ensures maintainability and reduces the risk of API changes breaking the application.
+The migration to the official OpenCode SDK simplifies setup, improves maintainability, and provides better long-term support. The official SDK is actively maintained by the OpenCode team and receives regular updates with new features and bug fixes.
